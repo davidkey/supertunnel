@@ -32,6 +32,8 @@ A thread runs on the client. This thread pulls byte arrays off of the send queue
 
 Another thread runs on the client. This thread makes a receive request to the server. When the server responds, the thread writes the data to the socket. It then waits one half of a second, and attempts to receive data again. 
 
+When a connection is established, the server will only allow future requests relating to that connection to come from the same ip address that the connection was created from. This makes it so that an attacker can't shut other people's connections down.
+
 
 
 

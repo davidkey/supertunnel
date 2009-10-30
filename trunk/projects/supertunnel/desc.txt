@@ -1,0 +1,45 @@
+SuperTunnel is an application for tunneling normal TCP connections over HTTP. It is similar to GNU's HttpTunnel, but its two main differences are that it does not keep HTTP connections with half of the data sent open (which results in it running somewhat slower but being able to operate over a wider range of firewalls, specifically the firewall at my dad's work) and it allows multiple virtual connections at the same time.
+
+SuperTunnel is written in Java, so no special modifications are needed to get it to run across multiple platforms. This means that both the client and the server work on Windows, Linux, Mac, BSD, and others.
+
+----------------------------------------------------
+
+Any URL sent to the server will work correctly, IE the path doesn't matter, which will allow, in the future, for multiple SuperTunnel servers running on the same actual server by putting a reverse proxy in front of them and having it redirect certain URLs to certain servers. The client could then be configured to connect with a specific URL.
+
+For any given URL, there is a query parameter called bogus, which contains random data. This is used to stop firewalls from caching stuff. Right now, it will be the toString version of Math.random, concatenated twice.
+
+There is a query parameter called action, which is one of create, send, receive, or destroy. 
+
+Create means that we want to establish a new virtual connection. There are no additional query parameters. The response body contains an id for the connection, which will consist only of numbers.
+
+Destroy means that we want to destroy an existing virtual connection. This closes the connection on the remote side.
+
+Send means that we have some data to send to the socket. There is a query parameter called connection, which is the id of the connection as received by create. The request data is the data to send. This data can be empty, which results in data not being sent. This is useful since SuperTunnel will automatically close a virtual connection after 120 seconds if no data is sent to it. There is also a query parameter called sequence. This is incremented every time some data is sent. The server keeps track of the last received sequence from the client, and ignores any data with a sequence number less than or equal to the last received sequence. There is also a query parameter called length, which is the length of the data that's being sent. The server will close the connection if the length is not correct.
+
+Receive means we want to read some data from the socket. There is a query parameter called connection which is the id of the connection to receive some data from. The server will block for up to 30 seconds waiting for data to become available. When the server responds, the first 4 bytes of the response represent the size of the response. The rest of the bytes are the response content.
+
+For destroy, send, and receive, if there is no such connection, a 500 status code is returned.
+
+The client has a concept of a send queue and a send buffer. The server has a concept of a receive queue and a receive buffer. The send queue is a BlockingQueue of byte arrays. The queue's maximum size is, by default, 400. The send buffer is an array of bytes that is used to read data from the client-side socket. Whenever data is read into the send buffer, it is then copied onto the send queue. The send buffer's default size is 500.
+
+The receive buffer and receive queue are almost identical. The receive queue has a maximum size of, by default, 2000. The receive buffer's default size is 500.
+
+When a receive request is made to the server, the server pulls byte arrays off of the receive queue until it has either reached 50KB in size or the queue is empty. It then sends this data to the client. The first data pull operation blocks for up to 30 seconds. The rest do not block at all.
+
+When new data arrives on the socket on the client side, it adds it to the send queue.
+
+A thread runs on the client. This thread pulls byte arrays off of the send queue. Whenever a byte array is available, the thread tries to pull as many byte array as it can until it has reached 50KB in size. It then sends this off to the server. Then, it waits one half of a second.
+
+Another thread runs on the client. This thread makes a receive request to the server. When the server responds, the thread writes the data to the socket. It then waits one half of a second, and attempts to receive data again. 
+
+
+
+
+
+
+
+
+
+
+
+

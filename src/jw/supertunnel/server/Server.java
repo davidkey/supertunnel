@@ -253,6 +253,8 @@ public class Server
         if (connection == null)
             throw new IOException("No such connection");
         connection.lastWriteTime = System.currentTimeMillis();
+        exchange.sendResponseHeaders(200, 0);
+        exchange.close();
     }
     
     public static byte[] readData(HttpExchange exchange) throws IOException

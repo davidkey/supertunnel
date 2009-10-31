@@ -79,6 +79,14 @@ public class Connection
             {
                 try
                 {
+                    receiveQueue.offer(Server.endOfStream);
+                }
+                catch (Exception ex)
+                {
+                    ex.printStackTrace();
+                }
+                try
+                {
                     socket.close();
                 }
                 catch (Exception ex)

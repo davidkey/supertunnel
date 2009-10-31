@@ -8,6 +8,7 @@ import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
@@ -38,7 +39,8 @@ public class Server
     public static ThreadPoolExecutor httpExecutor = new ThreadPoolExecutor(20, 100, 67,
             TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(800));
     
-    public static Map<String, Connection> connectionMap = new HashMap<String, Connection>();
+    public static Map<String, Connection> connectionMap = Collections
+            .synchronizedMap(new HashMap<String, Connection>());
     
     /**
      * @param args
@@ -153,28 +155,61 @@ public class Server
         {
             connection.setup();
         }
+        exchange.getResponseHeaders().add("Number-of-connections",
+                "" + connectionMap.size());
+        exchange.sendResponseHeaders(200, 0);
+        OutputStream out = exchange.getResponseBody();
+        out.write(connection.connectionId.getBytes());
+        out.flush();
+        out.close();
+        exchange.close();
     }
     
     private static void doDestroyRequest(HttpExchange exchange,
-            HashMap<String, String> parameters)
+            HashMap<String, String> parameters) throws IOException
     {
         Connection connection = connectionMap.get(parameters.get("connection"));
+        if (connection == null)
+            throw new IOException("No such connection");
+        connectionMap.remove(connection.connectionId);
+        connection.socket.close();
+        exchange.sendResponseHeaders(200, 0);
+        exchange.close();
     }
     
     private static void doSendRequest(HttpExchange exchange,
             HashMap<String, String> parameters) throws IOException
     {
         byte[] data = readData(exchange);
-        Connection connection = null;
-        synchronized (lock)
+        Connection connection = connectionMap.get(parameters.get("connection"));
+        if (connection == null)
+            throw new IOException("No such connection");
+        synchronized (connection)
         {
-            
+            // sequence,length
+            long requestedSequence = Long.parseLong(parameters.get("sequence"));
+            int length = Integer.parseInt(parameters.get("length"));
+            if (!(data.length == length))
+                throw new IOException("Data/length mismatch, specified " + length
+                        + " but sent " + data.length);
+            if (requestedSequence > connection.lastReadSequence)
+            {
+                connection.lastReadSequence = requestedSequence;
+                connection.output.write(data);
+            }
         }
+        exchange.sendResponseHeaders(200, 0);
+        exchange.close();
     }
     
+    public static final byte[] endOfStream = new byte[0];
+    
     private static void doReceiveRequest(HttpExchange exchange,
-            HashMap<String, String> parameters)
+            HashMap<String, String> parameters) throws IOException
     {
+        Connection connection = connectionMap.get(parameters.get("connection"));
+        if (connection == null)
+            throw new IOException("No such connection");
     }
     
     private static void doPingRequest(HttpExchange exchange,

@@ -184,6 +184,7 @@ public class Server
         Connection connection = connectionMap.get(parameters.get("connection"));
         if (connection == null)
             throw new IOException("No such connection");
+        connection.lastWriteTime = System.currentTimeMillis();
         synchronized (connection)
         {
             // sequence,length
@@ -210,15 +211,48 @@ public class Server
         Connection connection = connectionMap.get(parameters.get("connection"));
         if (connection == null)
             throw new IOException("No such connection");
+        connection.lastWriteTime = System.currentTimeMillis();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try
+        {
+            boolean streamEnded = false;
+            byte[] bytes = connection.receiveQueue.poll(30, TimeUnit.SECONDS);
+            while (bytes != null)
+            {
+                out.write(bytes);
+                if (bytes == endOfStream)
+                {
+                    streamEnded = true;
+                    break;
+                }
+                bytes = connection.receiveQueue.poll();
+            }
+            if (streamEnded)
+            {
+                connectionMap.remove(connection.connectionId);
+            }
+        }
+        catch (InterruptedException e)
+        {
+            throw new IOException("STUPID, GOSHDARNED INTERRUPTEDEXCEPTION", e);
+        }
+        byte[] bytes = out.toByteArray();
+        exchange.getResponseHeaders().add("Send-data-length", "" + bytes.length);
+        exchange.sendResponseHeaders(200, 0);
+        OutputStream output = exchange.getResponseBody();
+        output.write(bytes);
+        output.flush();
+        output.close();
+        exchange.close();
     }
     
     private static void doPingRequest(HttpExchange exchange,
-            HashMap<String, String> parameters)
+            HashMap<String, String> parameters) throws IOException
     {
-        synchronized (lock)
-        {
-            
-        }
+        Connection connection = connectionMap.get(parameters.get("connection"));
+        if (connection == null)
+            throw new IOException("No such connection");
+        connection.lastWriteTime = System.currentTimeMillis();
     }
     
     public static byte[] readData(HttpExchange exchange) throws IOException

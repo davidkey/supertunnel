@@ -98,7 +98,8 @@ public class Connection
     }
     
     public byte[] receiveBuffer = new byte[Server.configReceiveBufferSize];
-    public BlockingQueue<byte[]> receiveQueue = new LinkedBlockingQueue<byte[]>();
+    public BlockingQueue<byte[]> receiveQueue = new LinkedBlockingQueue<byte[]>(
+            Server.configReceiveQueueSize);
     public Socket socket;
     public InputStream input;
     public OutputStream output;

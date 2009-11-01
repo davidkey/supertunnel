@@ -1,0 +1,9 @@
+<project name="SuperTunnel">
+	<target name="compile">
+		<javac fork="true" srcdir="${basedir}/src" destdir="${basedir}/classes" debug="on" debuglevel="lines,vars,source" nowarn="true" encoding="UTF8">
+			<!--			<classpath>
+				<fileset dir="${basedir}/lib" />
+			</classpath> -->
+		</javac>
+	</target>
+</project>

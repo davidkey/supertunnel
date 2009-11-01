@@ -5,6 +5,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -15,6 +19,8 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import jw.supertunnel.Constants;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -115,22 +121,54 @@ public class Server
     protected static void processHttpRequest(HttpExchange exchange,
             HashMap<String, String> parameters) throws IOException
     {
+        System.out.println("request");
+        exchange.getResponseHeaders().add("Server",
+                "SuperTunnel/0.1, http://code.google.com/p/jwutils/wiki/SuperTunnel");
         String action = parameters.get("action");
-        if (action == null)
-            throw new IOException("The action parameter must be specified.");
-        if (action.equals("create"))
-            doCreateRequest(exchange, parameters);
-        else if (action.equals("destroy"))
-            doDestroyRequest(exchange, parameters);
-        else if (action.equals("send"))
-            doSendRequest(exchange, parameters);
-        else if (action.equals("receive"))
-            doReceiveRequest(exchange, parameters);
-        else if (action.equals("ping"))
-            doPingRequest(exchange, parameters);
-        else
-            throw new IOException("Invalid action, needs to be one of create, "
-                    + "destroy, send, receive, or ping.");
+        try
+        {
+            if (action == null)
+                throw new IOException("The action parameter must be specified.");
+            if (action.equals("create"))
+                doCreateRequest(exchange, parameters);
+            else if (action.equals("destroy"))
+                doDestroyRequest(exchange, parameters);
+            else if (action.equals("send"))
+                doSendRequest(exchange, parameters);
+            else if (action.equals("receive"))
+                doReceiveRequest(exchange, parameters);
+            else if (action.equals("ping"))
+                doPingRequest(exchange, parameters);
+            else
+                throw new IOException("Invalid action, needs to be one of create, "
+                        + "destroy, send, receive, or ping.");
+        }
+        catch (ResponseException e)
+        {
+            e.printStackTrace();
+            exchange.getResponseHeaders().add("Content-Type", "text/html");
+            exchange.sendResponseHeaders(e.code, 0);
+            OutputStream out = exchange.getResponseBody();
+            out
+                    .write(("<html><body><h1>Error: Status Code " + e.code + "</h1></body></html>")
+                            .getBytes());
+            out.flush();
+            out.close();
+            exchange.close();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            exchange.getResponseHeaders().add("Content-Type", "text/html");
+            exchange.sendResponseHeaders(500, 0);
+            OutputStream out = exchange.getResponseBody();
+            out
+                    .write(("<html><body><h1>Error: Status Code 500 (internal)</h1></body></html>")
+                            .getBytes());
+            out.flush();
+            out.close();
+            exchange.close();
+        }
     }
     
     private static void doCreateRequest(HttpExchange exchange,
@@ -140,7 +178,7 @@ public class Server
         synchronized (lock)
         {
             if (connectionMap.size() > configMaxConnections)
-                throw new IOException("Too many active connections");
+                throw new ResponseException(Constants.httpTooManyConnections);
             /*
              * We're good to set up the connection. We'll create a connection object and
              * add it to the connection map. Then we'll exit the synchronized block. Once
@@ -155,11 +193,11 @@ public class Server
         {
             connection.setup();
         }
-        exchange.getResponseHeaders().add("Number-of-connections",
+        exchange.getResponseHeaders().add("Number-Of-Connections",
                 "" + connectionMap.size());
         exchange.sendResponseHeaders(200, 0);
         OutputStream out = exchange.getResponseBody();
-        out.write(connection.connectionId.getBytes());
+        out.write((connection.connectionId + "\r\n").getBytes());
         out.flush();
         out.close();
         exchange.close();
@@ -170,7 +208,7 @@ public class Server
     {
         Connection connection = connectionMap.get(parameters.get("connection"));
         if (connection == null)
-            throw new IOException("No such connection");
+            throw new ResponseException(Constants.httpNoConnection);
         connectionMap.remove(connection.connectionId);
         connection.socket.close();
         exchange.sendResponseHeaders(200, 0);
@@ -183,7 +221,7 @@ public class Server
         byte[] data = readData(exchange);
         Connection connection = connectionMap.get(parameters.get("connection"));
         if (connection == null)
-            throw new IOException("No such connection");
+            throw new ResponseException(Constants.httpNoConnection);
         connection.lastWriteTime = System.currentTimeMillis();
         synchronized (connection)
         {
@@ -210,7 +248,7 @@ public class Server
     {
         Connection connection = connectionMap.get(parameters.get("connection"));
         if (connection == null)
-            throw new IOException("No such connection");
+            throw new ResponseException(Constants.httpNoConnection);
         connection.lastWriteTime = System.currentTimeMillis();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try
@@ -237,7 +275,8 @@ public class Server
             throw new IOException("STUPID, GOSHDARNED INTERRUPTEDEXCEPTION", e);
         }
         byte[] bytes = out.toByteArray();
-        exchange.getResponseHeaders().add("Send-data-length", "" + bytes.length);
+        System.out.println("sending " + bytes.length + " bytes to client");
+        exchange.getResponseHeaders().add("Send-Data-Length", "" + bytes.length);
         exchange.sendResponseHeaders(200, 0);
         OutputStream output = exchange.getResponseBody();
         output.write(bytes);
@@ -251,7 +290,7 @@ public class Server
     {
         Connection connection = connectionMap.get(parameters.get("connection"));
         if (connection == null)
-            throw new IOException("No such connection");
+            throw new ResponseException(Constants.httpNoConnection);
         connection.lastWriteTime = System.currentTimeMillis();
         exchange.sendResponseHeaders(200, 0);
         exchange.close();
@@ -282,8 +321,7 @@ public class Server
             out.write(buffer, 0, amount);
             total += amount;
             if (max > 0 && total > max)
-                throw new IOException("Too much data to be read, max is " + max
-                        + " and total is " + total);
+                throw new ResponseException(Constants.httpTooMuchData);
         }
     }
     
@@ -292,4 +330,5 @@ public class Server
         return "" + System.currentTimeMillis()
                 + ("" + Math.random()).replaceAll("[^0-9]", "");
     }
+    
 }

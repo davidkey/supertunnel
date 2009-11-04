@@ -73,10 +73,13 @@ public class Connection
             {
                 while (true)
                 {
+                    System.out.println("starting receive");
                     Response response = Client.request("GET", "action=receive&connection="
                             + connectionId, null);
+                    System.out.println("finished receive");
                     output.write(response.data);
                     output.flush();
+                    Thread.sleep(500);
                 }
             }
             catch (Exception e)
@@ -154,8 +157,10 @@ public class Connection
     
     public void sendToServer(byte[] data) throws IOException
     {
+        System.out.println("starting send");
         Response response = Client.request("POST", "action=send&connection=" + connectionId
                 + "&length=" + data.length + "&sequence=" + (lastReadSequence++), data);
+        System.out.println("finished send");
         if (response.status != 200)
             throw new IOException("Response code " + response.status
                     + " received, expected 200");

@@ -79,7 +79,7 @@ public class Connection
                     System.out.println("finished receive");
                     output.write(response.data);
                     output.flush();
-                    Thread.sleep(500);
+                    Thread.sleep(1000);
                 }
             }
             catch (Exception e)
@@ -122,13 +122,15 @@ public class Connection
                 {
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
                     byte[] bytes = sendQueue.poll(30, TimeUnit.SECONDS);
-                    while (bytes != null)
+                    while (bytes != null && out.size() < 30000)
                     {
                         out.write(bytes);
                         bytes = sendQueue.poll();
                     }
+                    if(bytes != null)
+                        out.write(bytes);
                     sendToServer(out.toByteArray());
-                    Thread.sleep(500);
+                    Thread.sleep(1000);
                 }
             }
             catch (Exception e)

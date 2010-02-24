@@ -122,7 +122,7 @@ public class Connection
                 {
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
                     byte[] bytes = sendQueue.poll(30, TimeUnit.SECONDS);
-                    while (bytes != null && out.size() < 30000)
+                    while (bytes != null && out.size() < 10000)
                     {
                         out.write(bytes);
                         bytes = sendQueue.poll();

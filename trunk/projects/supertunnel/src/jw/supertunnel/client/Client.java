@@ -130,7 +130,7 @@ public class Client
         response.status = connection.getResponseCode();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         InputStream in = connection.getInputStream();
-        copy(in, baos, 65000);
+        copy(in, baos, 800000);
         in.close();
         baos.close();
         response.data = baos.toByteArray();

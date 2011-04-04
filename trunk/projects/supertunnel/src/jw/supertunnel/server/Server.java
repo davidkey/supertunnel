@@ -5,10 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -21,6 +17,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import jw.supertunnel.Constants;
+import sun.misc.BASE64Decoder;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -228,6 +225,10 @@ public class Server
             // sequence,length
             long requestedSequence = Long.parseLong(parameters.get("sequence"));
             int length = Integer.parseInt(parameters.get("length"));
+            if(parameters.containsKey("data")) // Allow the data to be encoded in a request param
+            {
+            	data = new BASE64Decoder().decodeBuffer(parameters.get("data"));
+            }
             if (!(data.length == length))
                 throw new IOException("Data/length mismatch, specified " + length
                         + " but sent " + data.length);

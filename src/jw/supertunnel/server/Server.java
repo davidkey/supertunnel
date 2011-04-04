@@ -193,7 +193,9 @@ public class Server {
 
 	private static void doSendRequest(HttpExchange exchange,
 			HashMap<String, String> parameters) throws IOException {
-		byte[] data = readData(exchange);
+		byte[] data = {};
+		if(!parameters.containsKey("data"))
+			data = readData(exchange);
 		Connection connection = connectionMap.get(parameters.get("connection"));
 		if (connection == null)
 			throw new ResponseException(Constants.httpNoConnection);

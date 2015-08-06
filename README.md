@@ -4,7 +4,7 @@ Forked from https://code.google.com/p/supertunnel/.
 
 License: GNU LGPL (https://www.gnu.org/licenses/lgpl.html)
 
-# What's the deal with the work?
+# What's the deal with the fork?
 
 Updated to compile / build with maven. Also creates two runnable jars - client and server.
 

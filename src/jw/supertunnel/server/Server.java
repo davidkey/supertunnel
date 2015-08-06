@@ -77,14 +77,15 @@ public class Server {
 							+ "in the format \"host:port\" at the end of the command.");
 	}
 
-	private static void setupHttpServer() throws IOException {
+	@SuppressWarnings("restriction")
+   private static void setupHttpServer() throws IOException {
 		httpExecutor.allowCoreThreadTimeOut(true);
 		httpServer = HttpServer.create(new InetSocketAddress(configPort), 100);
 		httpServer.setExecutor(httpExecutor);
 		httpServer.createContext("/", new HttpHandler() {
 
-			@Override
-			public void handle(HttpExchange exchange) throws IOException {
+			@SuppressWarnings("deprecation")
+         public void handle(HttpExchange exchange) throws IOException {
 				String query = exchange.getRequestURI().getRawQuery();
 				HashMap<String, String> parameters = new HashMap<String, String>();
 				if (query != null && !query.equals("")) {
@@ -103,7 +104,8 @@ public class Server {
 		httpServer.start();
 	}
 
-	protected static void processHttpRequest(HttpExchange exchange,
+	@SuppressWarnings("restriction")
+   protected static void processHttpRequest(HttpExchange exchange,
 			HashMap<String, String> parameters) throws IOException {
 		System.out.println("request");
 		exchange.getResponseHeaders()

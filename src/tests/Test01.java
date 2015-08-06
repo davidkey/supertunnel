@@ -14,13 +14,13 @@ public class Test01
     /**
      * @param args
      */
-    public static void main(String[] args) throws Throwable
+    @SuppressWarnings("restriction")
+   public static void main(String[] args) throws Throwable
     {
         HttpServer server = HttpServer.create(new InetSocketAddress(12556), 50);
         server.createContext("/some/path", new HttpHandler()
         {
             
-            @Override
             public void handle(HttpExchange exchange) throws IOException
             {
                 System.out.println(exchange.getRequestURI().getRawQuery());

@@ -1,0 +1,79 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>jw.supertunnel</groupId>
+	<artifactId>SuperTunnel</artifactId>
+	<version>1.0.0</version>
+	<properties>
+		<java.version>1.6</java.version>
+		<maven.deploy.skip>true</maven.deploy.skip>
+	</properties>
+	<build>
+		<sourceDirectory>src</sourceDirectory>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.3</version>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.6</version>
+				<executions>
+					<execution>
+						<id>only-server</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<phase>package</phase>
+						<configuration>
+							<classifier>server</classifier>
+							<!-- <excludes>
+								<exclude>jw/supertunnel/client/*.*</exclude>
+							</excludes> -->
+							<archive>
+								<manifest>
+									<mainClass>jw.supertunnel.server.Server</mainClass>
+								</manifest>
+							</archive>
+						</configuration>
+					</execution>
+					<execution>
+						<id>only-client</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<phase>package</phase>
+						<configuration>
+							<classifier>client</classifier>
+							<!-- <excludes>
+								<exclude>jw/supertunnel/server/*.*</exclude>
+							</excludes> -->
+							<archive>
+								<manifest>
+									<mainClass>jw.supertunnel.client.Client</mainClass>
+								</manifest>
+							</archive>
+						</configuration>
+					</execution>
+					<!-- dont create default jar -->
+					<execution>
+						<id>default-jar</id>
+						<phase>never</phase>
+						<configuration>
+							<finalName>unwanted</finalName>
+							<classifier>unwanted</classifier>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+
+
+		</plugins>
+	</build>
+</project>

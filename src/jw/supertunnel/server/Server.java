@@ -16,13 +16,15 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import jw.supertunnel.Constants;
-import sun.misc.BASE64Decoder;
+import javax.xml.bind.DatatypeConverter;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
+import jw.supertunnel.Constants;
+
+@SuppressWarnings("restriction")
 public class Server {
 	public static HttpServer httpServer;
 
@@ -77,7 +79,6 @@ public class Server {
 							+ "in the format \"host:port\" at the end of the command.");
 	}
 
-	@SuppressWarnings("restriction")
    private static void setupHttpServer() throws IOException {
 		httpExecutor.allowCoreThreadTimeOut(true);
 		httpServer = HttpServer.create(new InetSocketAddress(configPort), 100);
@@ -104,7 +105,6 @@ public class Server {
 		httpServer.start();
 	}
 
-	@SuppressWarnings("restriction")
    protected static void processHttpRequest(HttpExchange exchange,
 			HashMap<String, String> parameters) throws IOException {
 		System.out.println("request");
@@ -193,6 +193,7 @@ public class Server {
 		exchange.close();
 	}
 
+	
 	private static void doSendRequest(HttpExchange exchange,
 			HashMap<String, String> parameters) throws IOException {
 		byte[] data = {};
@@ -212,7 +213,8 @@ public class Server {
 				System.out
 						.println("Sourcing data from data parameter, which is length "
 								+ parameters.get("data").length());
-				data = new BASE64Decoder().decodeBuffer(parameters.get("data"));
+				data = DatatypeConverter.parseBase64Binary(parameters.get("data"));
+				
 			} else
 				System.out.println("Sourcing data from request contents");
 			if (!(data.length == length))

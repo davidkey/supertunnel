@@ -11,7 +11,6 @@ import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Queue;

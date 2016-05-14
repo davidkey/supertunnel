@@ -5,15 +5,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.net.URL;
-import java.util.ArrayDeque;
 import java.util.Arrays;
-import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
-import jw.supertunnel.server.Server;
 
 /**
  * When we get a socket connection we start a new connection object. This starts a read
@@ -174,7 +169,7 @@ public class Connection
         {
             try
             {
-                Response response = Client.request("GET", "action=destroy&connection="
+                Client.request("GET", "action=destroy&connection="
                         + connectionId, null);
             }
             catch (Exception e)

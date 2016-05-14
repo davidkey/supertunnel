@@ -2,7 +2,9 @@ package jw.supertunnel.server;
 
 public class ResponseException extends RuntimeException
 {
-    public int code;
+	private static final long serialVersionUID = -2401737391831632010L;
+	
+	public int code;
     
     public ResponseException(int code)
     {

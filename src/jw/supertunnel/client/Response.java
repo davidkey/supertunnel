@@ -1,7 +1,6 @@
 package jw.supertunnel.client;
 
-public class Response
-{
-    public int status;
-    public byte[] data;
+public class Response {
+	public int status;
+	public byte[] data;
 }

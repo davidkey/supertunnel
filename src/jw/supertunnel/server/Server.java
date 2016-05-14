@@ -40,11 +40,10 @@ public class Server {
 
 	public static final Object lock = new Object();
 
-	public static ThreadPoolExecutor httpExecutor = new ThreadPoolExecutor(20,
-			100, 67, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(800));
+	public static ThreadPoolExecutor httpExecutor = new ThreadPoolExecutor(20, 100, 67, TimeUnit.SECONDS,
+			new LinkedBlockingQueue<Runnable>(800));
 
-	public static Map<String, Connection> connectionMap = Collections
-			.synchronizedMap(new HashMap<String, Connection>());
+	public static Map<String, Connection> connectionMap = Collections.synchronizedMap(new HashMap<String, Connection>());
 
 	/**
 	 * @param args
@@ -69,24 +68,22 @@ public class Server {
 			if (next.equals("-p")) {
 				configPort = Integer.parseInt(args.poll());
 			} else {
-				throw new RuntimeException("Unrecognized argument \"" + next
-						+ "\", try adding --help onto the end of the command.");
+				throw new RuntimeException("Unrecognized argument \"" + next + "\", try adding --help onto the end of the command.");
 			}
 		}
 		if (!gotHost)
 			throw new RuntimeException(
-					"You didn't specify a host/port to connect to, "
-							+ "in the format \"host:port\" at the end of the command.");
+					"You didn't specify a host/port to connect to, " + "in the format \"host:port\" at the end of the command.");
 	}
 
-   private static void setupHttpServer() throws IOException {
+	private static void setupHttpServer() throws IOException {
 		httpExecutor.allowCoreThreadTimeOut(true);
 		httpServer = HttpServer.create(new InetSocketAddress(configPort), 100);
 		httpServer.setExecutor(httpExecutor);
 		httpServer.createContext("/", new HttpHandler() {
 
 			@SuppressWarnings("deprecation")
-         public void handle(HttpExchange exchange) throws IOException {
+			public void handle(HttpExchange exchange) throws IOException {
 				String query = exchange.getRequestURI().getRawQuery();
 				HashMap<String, String> parameters = new HashMap<String, String>();
 				if (query != null && !query.equals("")) {
@@ -95,8 +92,7 @@ public class Server {
 						String[] split = param.split("\\=", 2);
 						if (split.length == 1)
 							continue;
-						parameters.put(URLDecoder.decode(split[0]),
-								URLDecoder.decode(split[1]));
+						parameters.put(URLDecoder.decode(split[0]), URLDecoder.decode(split[1]));
 					}
 				}
 				processHttpRequest(exchange, parameters);
@@ -105,12 +101,9 @@ public class Server {
 		httpServer.start();
 	}
 
-   protected static void processHttpRequest(HttpExchange exchange,
-			HashMap<String, String> parameters) throws IOException {
+	protected static void processHttpRequest(HttpExchange exchange, HashMap<String, String> parameters) throws IOException {
 		System.out.println("request");
-		exchange.getResponseHeaders()
-				.add("Server",
-						"SuperTunnel/0.1, http://code.google.com/p/jwutils/wiki/SuperTunnel");
+		exchange.getResponseHeaders().add("Server", "SuperTunnel/0.1, http://code.google.com/p/jwutils/wiki/SuperTunnel");
 		String action = parameters.get("action");
 		try {
 			if (action == null)
@@ -126,16 +119,13 @@ public class Server {
 			else if (action.equals("ping"))
 				doPingRequest(exchange, parameters);
 			else
-				throw new IOException(
-						"Invalid action, needs to be one of create, "
-								+ "destroy, send, receive, or ping.");
+				throw new IOException("Invalid action, needs to be one of create, " + "destroy, send, receive, or ping.");
 		} catch (ResponseException e) {
 			e.printStackTrace();
 			exchange.getResponseHeaders().add("Content-Type", "text/html");
 			exchange.sendResponseHeaders(e.code, 0);
 			OutputStream out = exchange.getResponseBody();
-			out.write(("<html><body><h1>Error: Status Code " + e.code + "</h1></body></html>")
-					.getBytes());
+			out.write(("<html><body><h1>Error: Status Code " + e.code + "</h1></body></html>").getBytes());
 			out.flush();
 			out.close();
 			exchange.close();
@@ -144,26 +134,22 @@ public class Server {
 			exchange.getResponseHeaders().add("Content-Type", "text/html");
 			exchange.sendResponseHeaders(500, 0);
 			OutputStream out = exchange.getResponseBody();
-			out.write(("<html><body><h1>Error: Status Code 500 (internal)</h1></body></html>")
-					.getBytes());
+			out.write(("<html><body><h1>Error: Status Code 500 (internal)</h1></body></html>").getBytes());
 			out.flush();
 			out.close();
 			exchange.close();
 		}
 	}
 
-	private static void doCreateRequest(HttpExchange exchange,
-			HashMap<String, String> parameters) throws IOException {
+	private static void doCreateRequest(HttpExchange exchange, HashMap<String, String> parameters) throws IOException {
 		Connection connection = null;
 		synchronized (lock) {
 			if (connectionMap.size() > configMaxConnections)
 				throw new ResponseException(Constants.httpTooManyConnections);
 			/*
-			 * We're good to set up the connection. We'll create a connection
-			 * object and add it to the connection map. Then we'll exit the
-			 * synchronized block. Once we've exited, we'll establish an actual
-			 * socket connection and set up the threads for the connection,
-			 * while synchronized on the connection itself.
+			 * We're good to set up the connection. We'll create a connection object and add it to the connection map. Then
+			 * we'll exit the synchronized block. Once we've exited, we'll establish an actual socket connection and set up
+			 * the threads for the connection, while synchronized on the connection itself.
 			 */
 			connection = new Connection();
 			connection.connectionId = generateConnectionId();
@@ -172,8 +158,7 @@ public class Server {
 		synchronized (connection) {
 			connection.setup();
 		}
-		exchange.getResponseHeaders().add("Number-Of-Connections",
-				"" + connectionMap.size());
+		exchange.getResponseHeaders().add("Number-Of-Connections", "" + connectionMap.size());
 		exchange.sendResponseHeaders(200, 0);
 		OutputStream out = exchange.getResponseBody();
 		out.write((connection.connectionId + "\r\n").getBytes());
@@ -182,8 +167,7 @@ public class Server {
 		exchange.close();
 	}
 
-	private static void doDestroyRequest(HttpExchange exchange,
-			HashMap<String, String> parameters) throws IOException {
+	private static void doDestroyRequest(HttpExchange exchange, HashMap<String, String> parameters) throws IOException {
 		Connection connection = connectionMap.get(parameters.get("connection"));
 		if (connection == null)
 			throw new ResponseException(Constants.httpNoConnection);
@@ -193,11 +177,9 @@ public class Server {
 		exchange.close();
 	}
 
-	
-	private static void doSendRequest(HttpExchange exchange,
-			HashMap<String, String> parameters) throws IOException {
+	private static void doSendRequest(HttpExchange exchange, HashMap<String, String> parameters) throws IOException {
 		byte[] data = {};
-		if(!parameters.containsKey("data"))
+		if (!parameters.containsKey("data"))
 			data = readData(exchange);
 		Connection connection = connectionMap.get(parameters.get("connection"));
 		if (connection == null)
@@ -208,20 +190,16 @@ public class Server {
 			long requestedSequence = Long.parseLong(parameters.get("sequence"));
 			int length = Integer.parseInt(parameters.get("length"));
 			if (parameters.containsKey("data")) // Allow the data to be encoded
-												// in a request param
+			// in a request param
 			{
-				System.out
-						.println("Sourcing data from data parameter, which is length "
-								+ parameters.get("data").length());
+				System.out.println("Sourcing data from data parameter, which is length " + parameters.get("data").length());
 				data = DatatypeConverter.parseBase64Binary(parameters.get("data"));
-				
+
 			} else
 				System.out.println("Sourcing data from request contents");
 			if (!(data.length == length))
-				throw new IOException(
-						"Data/length mismatch, client said it was sending "
-								+ length + " but it actually sent "
-								+ data.length + " bytes of data to us");
+				throw new IOException("Data/length mismatch, client said it was sending " + length + " but it actually sent " + data.length
+						+ " bytes of data to us");
 			if (requestedSequence > connection.lastReadSequence) {
 				connection.lastReadSequence = requestedSequence;
 				connection.output.write(data);
@@ -233,8 +211,7 @@ public class Server {
 
 	public static final byte[] endOfStream = new byte[0];
 
-	private static void doReceiveRequest(HttpExchange exchange,
-			HashMap<String, String> parameters) throws IOException {
+	private static void doReceiveRequest(HttpExchange exchange, HashMap<String, String> parameters) throws IOException {
 		Connection connection = connectionMap.get(parameters.get("connection"));
 		if (connection == null)
 			throw new ResponseException(Constants.httpNoConnection);
@@ -259,8 +236,7 @@ public class Server {
 		}
 		byte[] bytes = out.toByteArray();
 		System.out.println("sending " + bytes.length + " bytes to client");
-		exchange.getResponseHeaders()
-				.add("Send-Data-Length", "" + bytes.length);
+		exchange.getResponseHeaders().add("Send-Data-Length", "" + bytes.length);
 		exchange.sendResponseHeaders(200, 0);
 		OutputStream output = exchange.getResponseBody();
 		output.write(bytes);
@@ -269,8 +245,7 @@ public class Server {
 		exchange.close();
 	}
 
-	private static void doPingRequest(HttpExchange exchange,
-			HashMap<String, String> parameters) throws IOException {
+	private static void doPingRequest(HttpExchange exchange, HashMap<String, String> parameters) throws IOException {
 		Connection connection = connectionMap.get(parameters.get("connection"));
 		if (connection == null)
 			throw new ResponseException(Constants.httpNoConnection);
@@ -288,13 +263,11 @@ public class Server {
 		return out.toByteArray();
 	}
 
-	public static void copy(InputStream in, OutputStream out)
-			throws IOException {
+	public static void copy(InputStream in, OutputStream out) throws IOException {
 		copy(in, out, -1);
 	}
 
-	public static void copy(InputStream in, OutputStream out, int max)
-			throws IOException {
+	public static void copy(InputStream in, OutputStream out, int max) throws IOException {
 		byte[] buffer = new byte[256];
 		int amount;
 		int total = 0;
@@ -307,8 +280,7 @@ public class Server {
 	}
 
 	public static String generateConnectionId() {
-		return "" + System.currentTimeMillis()
-				+ ("" + Math.random()).replaceAll("[^0-9]", "");
+		return "" + System.currentTimeMillis() + ("" + Math.random()).replaceAll("[^0-9]", "");
 	}
 
 }

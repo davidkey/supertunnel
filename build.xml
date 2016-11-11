@@ -7,4 +7,18 @@
 			</classpath> -->
 		</javac>
 	</target>
+
+	<target name="jar">
+		<mkdir dir="${basedir}/jar"/>
+		<jar destfile="${basedir}/jar/Client.jar" basedir="${basedir}/classes">
+			<manifest>
+				<attribute name="Main-Class" value="jw.supertunnel.client.Client"/>
+			</manifest>
+		</jar>
+		<jar destfile="${basedir}/jar/Server.jar" basedir="${basedir}/classes">
+			<manifest>
+				<attribute name="Main-Class" value="jw.supertunnel.server.Server"/>
+			</manifest>
+		</jar>
+	</target>
 </project>
